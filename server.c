@@ -67,7 +67,7 @@ int main() {
         char response[2048];
         sprintf(response, 
             "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/html\r\n\r\n"
+            "Content-Type: text/html; charset=utf-8\r\n\r\n"
             "<html><body>"
             "<h1>%s</h1>"
             "<img src='https://www.mirea.ru/upload/medialibrary/c1a/MIREA_Gerb_Colour.jpg' width='300'>"
