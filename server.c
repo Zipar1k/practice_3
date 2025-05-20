@@ -3,8 +3,28 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <ctype.h>
 
 #define PORT 8080
+
+void urldecode(char *dst, const char *src) {
+    char a, b;
+    while (*src) {
+        if ((*src == '%') && (a = src[1]) && (b = src[2]) && isxdigit(a) && isxdigit(b)) {
+            if (a >= 'a') a -= 'a'-'A';
+            if (a >= 'A') a -= ('A' - 10);
+            else a -= '0';
+            if (b >= 'a') b -= 'a'-'A';
+            if (b >= 'A') b -= ('A' - 10);
+            else b -= '0';
+            *dst++ = 16 * a + b;
+            src += 3;
+        } else {
+            *dst++ = *src++;
+        }
+    }
+    *dst++ = '\0';
+}
 
 int main() {
     // Создаем сокет
@@ -34,10 +54,14 @@ int main() {
         
         // Извлекаем сообщение
         char* msg_start = strstr(buffer, "message=");
-        char message[256] = "";
-        if(msg_start) {
-            sscanf(msg_start + 8, "%255[^& ]", message);
+        char encoded_msg[256] = "";
+        char decoded_msg[256] = "";
+
+        if (msg_start) {
+            sscanf(msg_start + 8, "%255[^& \n]", encoded_msg);
+            urldecode(decoded_msg, encoded_msg); // Декодируем
         }
+
         
         // Отправляем HTML ответ
         char response[2048];
@@ -48,7 +72,7 @@ int main() {
             "<h1>%s</h1>"
             "<img src='https://www.mirea.ru/upload/medialibrary/c1a/MIREA_Gerb_Colour.jpg' width='300'>"
             "</body></html>", 
-            message);
+            decoded_msg);
             
         write(client_fd, response, strlen(response));
         close(client_fd);
